@@ -12,80 +12,82 @@ pipeline {
 
     stages {
 
-        // --------------------------------
-        // STAGE 1: CHECKOUT
-        // --------------------------------
+        // -----------------------
+        // CHECKOUT
+        // -----------------------
         stage('Checkout') {
             steps {
-                echo "Cleaning workspace..."
                 cleanWs()
-
-                echo "Cloning GitHub repository..."
                 git branch: 'main',
-                    url: 'https://github.com/ReshmaArsh/Jenkins.git'
+                url: 'https://github.com/ReshmaArsh/Jenkins.git'
             }
         }
 
-        // --------------------------------
-        // STAGE 2: BUILD
-        // --------------------------------
+        // -----------------------
+        // BUILD
+        // -----------------------
         stage('Build') {
             steps {
 
-                echo "Installing Backend Dependencies..."
+                echo "Building Backend..."
                 dir("${BACKEND_DIR}") {
-                    sh 'npm install'
+                    sh "pwd"
+                    sh "npm install"
                 }
 
-                echo "Installing Frontend Dependencies..."
+                echo "Building Frontend..."
                 dir("${FRONTEND_DIR}") {
-                    sh 'npm install'
-                    sh 'npm run build'
+                    sh "pwd"
+                    sh "npm install"
+                    sh "npm run build"
                 }
 
-                echo "Build completed successfully!"
             }
         }
 
-        // --------------------------------
-        // STAGE 3: DEPLOY
-        // --------------------------------
+        // -----------------------
+        // DEPLOY
+        // -----------------------
         stage('Deploy') {
             steps {
 
-                sh """
+                sh '''
+                echo "Workspace location:"
+                pwd
+                ls -l
 
-                echo "=============================="
-                echo "Deploying Backend"
-                echo "=============================="
+                echo "Checking backend exists:"
+                ls -l backend
 
-                sudo rm -rf ${DEPLOY_PATH}/backend
+                echo "Removing old backend"
+                sudo rm -rf /home/ec2-user/backend
 
-                sudo cp -r ${WORKSPACE}/${BACKEND_DIR} ${DEPLOY_PATH}/
+                echo "Copying backend"
+                sudo cp -r backend /home/ec2-user/
 
-                cd ${DEPLOY_PATH}/${BACKEND_DIR}
+                echo "Verifying copy"
+                ls -l /home/ec2-user/
 
+                echo "Entering backend folder"
+                cd /home/ec2-user/backend
+
+                echo "Installing production dependencies"
                 sudo npm install --production
 
-                sudo systemctl restart ${SERVICE_NAME}
+                echo "Restart backend service"
+                sudo systemctl restart backend
 
 
-                echo "=============================="
-                echo "Deploying Frontend"
-                echo "=============================="
+                echo "Deploying frontend"
+                sudo rm -rf /usr/share/nginx/html/*
 
-                sudo rm -rf ${NGINX_PATH}/*
+                sudo cp -r frontend/build/* /usr/share/nginx/html/
 
-                sudo cp -r ${WORKSPACE}/${FRONTEND_DIR}/build/* ${NGINX_PATH}/
-
+                echo "Restart nginx"
                 sudo systemctl restart nginx
 
-
-                echo "=============================="
-                echo "Deployment Completed"
-                echo "=============================="
-
-                """
+                echo "Deployment completed successfully"
+                '''
             }
         }
 
@@ -94,15 +96,11 @@ pipeline {
     post {
 
         success {
-            echo "✅ SUCCESS: Application deployed successfully!"
+            echo "SUCCESS: Deployment completed"
         }
 
         failure {
-            echo "❌ ERROR: Deployment failed!"
-        }
-
-        always {
-            echo "Pipeline finished."
+            echo "FAILURE: Deployment failed"
         }
 
     }
