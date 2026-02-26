@@ -6,7 +6,7 @@ pipeline {
         FRONTEND_DIR = "frontend"
         BACKEND_DIR  = "backend"
         DEPLOY_PATH  = "/home/ec2-user"
-        NGINX_PATH   = "/usr/share/nginx/html"
+        NGINX_PATH   = "/var/www/html"
         SERVICE_NAME = "backend"
     }
 
