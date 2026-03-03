@@ -1,6 +1,6 @@
 pipeline {
 
-    agent { label 'built-in' }
+    agent any
 
     environment {
         FRONTEND_DIR = "frontend"
